@@ -10,9 +10,13 @@ import { upload } from "../controllers/upload.controller.js";
 
 const router = express.Router();
 
-router.get("/users", protectRoute, getUsersForSidebar);
+// 👇 change send/:id to message/send/:id
+router.post("/message/send/:id", protectRoute, upload.single("image"), sendMessage);
+
+// already fixed
 router.get("/chat/:id", protectRoute, getMessages);
-router.post("/send/:id", protectRoute, upload.single("image"), sendMessage);
+router.get("/users", protectRoute, getUsersForSidebar);
+
 
 
 router.stack.forEach((layer) => {

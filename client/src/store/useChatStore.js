@@ -4,13 +4,13 @@ import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore = create((set, get) => ({
-  // ✅ added `get`
   messages: [],
   users: [],
-  selectedUser: null, // ✅ fixed typo from `selectedUsers` to `selectedUser`
+  selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
 
+  // Fetch sidebar users
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
@@ -23,6 +23,7 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
+  // Fetch chat messages
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
     try {
@@ -35,10 +36,12 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
+  // Set selected user in store
   setSelectedUser: (selectedUser) => {
-    set({ selectedUser }); // ✅ make sure the property is spelled the same
+    set({ selectedUser });
   },
 
+  // Send message to backend (text or image)
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
 
@@ -53,7 +56,7 @@ export const useChatStore = create((set, get) => ({
       }
 
       const response = await axiosInstance.post(
-        `/messages/send/${selectedUser._id}`,
+        `/messages/message/send/${selectedUser._id}`, // ✅ Updated route
         payload,
         config
       );
@@ -64,6 +67,8 @@ export const useChatStore = create((set, get) => ({
       toast.error("Failed to send message");
     }
   },
+
+  // Listen for new socket messages
   subscribeToMessages: () => {
     const { selectedUser } = get();
     if (!selectedUser) return;
@@ -74,13 +79,13 @@ export const useChatStore = create((set, get) => ({
       const isFromSelectedUser = newMessage.senderId === selectedUser._id;
       const isToMeFromSelectedUser = newMessage.receiverId === selectedUser._id;
 
-      // Append only if it's part of the current chat
       if (isFromSelectedUser || isToMeFromSelectedUser) {
         set({ messages: [...get().messages, newMessage] });
       }
     });
   },
 
+  // Remove socket listener
   unSubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
