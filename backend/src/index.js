@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 
 // ✅ Add these middlewares
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Serve static frontend files
