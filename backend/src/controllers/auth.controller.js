@@ -58,11 +58,10 @@ export const login = async (req, res) => {
   // Logic for user login
   const { email, password } = req.body;
   try {
-    
-      if (!email || !password) {
-        return res.status(400).send("Please fill all the fields");
-      }
-    
+    if (!email || !password) {
+      return res.status(400).send("Please fill all the fields");
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -92,7 +91,6 @@ export const login = async (req, res) => {
     console.error("Error during login:", error);
     return res.status(500).send("Internal server error");
   }
-
 };
 
 export const logout = (req, res) => {
@@ -111,36 +109,34 @@ export const logout = (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-  // Logic for updating user profile
   try {
     const { profilepic } = req.body;
     const userId = req.user._id;
+
     if (!profilepic) {
       return res
         .status(400)
         .json({ message: "Please provide a profile picture" });
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(profilepic);
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { profilepic: uploadResponse.secure_url },
+      { profilepic },
       { new: true }
     );
-    return res.status(200).json(updatedUser);
-    
+
+    res.status(200).json(updatedUser);
   } catch (error) {
-    console.error("Error during profile update:", error);
-    return res.status(500).send("Internal server error");
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
-export const checkAuth = (req , res) => {
+export const checkAuth = (req, res) => {
   try {
     res.status(200).json(req.user);
-
-  }catch(error){
-    console.log("error in checkAuth :" , error.message);
-    res.status(500).json({message : "Internal Server Error"})
+  } catch (error) {
+    console.log("error in checkAuth :", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
