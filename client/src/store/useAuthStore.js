@@ -3,7 +3,13 @@ import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.MODE === "development" ? 'http://localhost:5001/api' : "/";
+// ✅ Smart BASE_URL handling for socket connection (dev + prod)
+const BASE_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5001"
+    : (window.location.origin.startsWith("https")
+        ? window.location.origin.replace(/^https/, "wss")
+        : window.location.origin.replace(/^http/, "ws"));
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -17,19 +23,13 @@ export const useAuthStore = create((set, get) => ({
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
-      set({
-        authUser: res.data,
-      });
-      get().connectSocket();
+      set({ authUser: res.data });
+      get().connectSocket(); // ✅ connect socket only after login
     } catch (err) {
-      set({
-        authUser: null,
-      });
+      set({ authUser: null });
       console.error("Error checking auth:", err);
     } finally {
-      set({
-        isCheckingAuth: false,
-      });
+      set({ isCheckingAuth: false });
     }
   },
 
@@ -42,6 +42,7 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
     } catch (err) {
       console.error("Error signing up:", err);
+      toast.error("Signup failed");
     } finally {
       set({ isSigningUp: false });
     }
@@ -78,7 +79,6 @@ export const useAuthStore = create((set, get) => ({
     set({ isUpdatingProfile: true });
     try {
       const res = await axiosInstance.put("/auth/update-profile", data);
-      console.log("Profile update response:", res.data);
       set((state) => ({
         authUser: { ...state.authUser, ...res.data },
       }));
@@ -100,15 +100,23 @@ export const useAuthStore = create((set, get) => ({
         userId: authUser._id,
       },
     });
+
     socket.connect();
-    set({ socket: socket });
+
+    // Set socket instance in store
+    set({ socket });
+
+    // Listen for online users
     socket.on("getOnlineUsers", (usersIds) => {
       set({ onlineUsers: usersIds });
     });
   },
+
   disconnectSocket: () => {
-    if (get().socket?.connected) {
-      get().socket.disconnect();
+    const socket = get().socket;
+    if (socket?.connected) {
+      socket.disconnect();
+      set({ socket: null });
     }
   },
 }));
