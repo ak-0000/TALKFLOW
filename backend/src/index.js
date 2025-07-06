@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 
 // ✅ Add these middlewares
 app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Serve static frontend files
@@ -26,7 +26,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 // Catch-all route for SPA
-app.get("/*", (req, res) => {
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../../client/dist/index.html"));
 });
 
