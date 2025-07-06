@@ -40,6 +40,23 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+import util from "util";
+
+function logRoutes(app) {
+  console.log("\n🔍 Registered Routes:");
+  app._router.stack
+    .filter((r) => r.route)
+    .forEach((r) => {
+      console.log(
+        `[${Object.keys(r.route.methods).join(",").toUpperCase()}] ${r.route.path}`
+      );
+    });
+}
+
+logRoutes(app); // call after app.use()s
+
+
+
 // Start server
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
