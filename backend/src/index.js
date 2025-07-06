@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser"; // ✅ Add this
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import { connectDB } from "./lib/db.js";
-
+import { app, server } from "./lib/socket.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -35,6 +35,6 @@ app.get(/^\/(?!api).*/, (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
