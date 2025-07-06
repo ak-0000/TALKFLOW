@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import util from "util";
 
 import { connectDB } from "./lib/db.js";
 import { app, server } from "./lib/socket.js";
@@ -29,8 +30,19 @@ app.use(
 );
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/messages", messageRoutes);
+try {
+  app.use("/api/auth", authRoutes);
+  console.log("✅ Mounted /api/auth");
+} catch (err) {
+  console.error("❌ Error mounting /api/auth:", err);
+}
+
+try {
+  app.use("/api/messages", messageRoutes);
+  console.log("✅ Mounted /api/messages");
+} catch (err) {
+  console.error("❌ Error mounting /api/messages:", err);
+}
 
 // Serve frontend in production
 if (process.env.NODE_ENV === "production") {
@@ -40,7 +52,6 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-import util from "util";
 
 function logRoutes(app) {
   console.log("\n🔍 Registered Routes:");

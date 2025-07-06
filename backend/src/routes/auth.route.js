@@ -21,4 +21,12 @@ router.get("/check", protectRoute, checkAuth);
 router.put("/upload-profile", protectRoute, upload.single("image"), uploadImageToCloudinary);
 router.put("/update-profile", protectRoute, updateProfile);
 
+
+router.stack.forEach((layer) => {
+  if (layer.route) {
+    console.log("🔹 ROUTE:", layer.route.path);
+  }
+});
+
+
 export default router;
