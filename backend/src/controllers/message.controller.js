@@ -3,6 +3,7 @@ import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
 
 import streamifier from "streamifier";
+import { getRecieverSocketId, io } from "../lib/socket.js";
 
 
 export const getUsersForSidebar = async (req, res) => {
@@ -72,6 +73,11 @@ export const sendMessage = async (req, res) => {
 
     await newMessage.save();
 
+    const receicerSocketId = getRecieverSocketId(receiverId)
+    if(receicerSocketId) {
+      io.to(receicerSocketId).emit("newMessage", newMessage)
+    }
+ 
     res.status(201).json(newMessage);
   } catch (error) {
     console.error("Error sending message:", error);
