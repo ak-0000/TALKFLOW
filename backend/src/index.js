@@ -1,4 +1,3 @@
-// index.js
 import { app, server } from "./lib/socket.js";
 import express from "express";
 import cors from "cors";
@@ -34,11 +33,13 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/user", userRoutes);
 
-// Static frontend build
-app.use(express.static(path.join(__dirname, "../../../client/dist")));
+// ✅ Static frontend build
+const clientDistPath = path.join(__dirname, "../../../client/dist");
+app.use(express.static(clientDistPath));
 
+// ✅ Catch-all route for SPA
 app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "../../client/dist/index.html"));
+  res.sendFile(path.join(clientDistPath, "index.html"));
 });
 
 // Start server
