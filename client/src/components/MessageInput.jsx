@@ -4,11 +4,12 @@ import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 const MessageInput = () => {
+  const { sendMessage, selectedChat } = useChatStore();
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null); // ✅ store actual file
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const [isSending, setIsSending] = useState(false); // ✅ NEW
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -32,35 +33,41 @@ const MessageInput = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-const handleSendMessage = async (e) => {
-  e.preventDefault();
-  if (!text.trim() && !imageFile) return;
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!text.trim() && !imageFile) return;
+    if (isSending) return;
+    setIsSending(true);
+    try {
+      const formData = new FormData();
+      const messageText = text.trim() || (imageFile ? imageFile.name : "");
 
-  try {
-    const formData = new FormData();
+      formData.append("text", messageText);
+      formData.append("chatId", selectedChat._id); // ✅ MUST INCLUDE THIS
 
-    // If text is empty but imageFile exists, set text to image filename by default
-    const messageText = text.trim() || (imageFile ? imageFile.name : "");
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
 
-    formData.append("text", messageText);
+      // ✅ Debug log
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
 
-    if (imageFile) {
-      formData.append("image", imageFile);
+      await sendMessage(formData);
+
+      // Clear inputs
+      setText("");
+      setImagePreview(null);
+      setImageFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      toast.error("Failed to send message");
+    } finally {
+      setIsSending(false);
     }
-
-    await sendMessage(formData);
-
-    // Clear inputs
-    setText("");
-    setImagePreview(null);
-    setImageFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  } catch (error) {
-    console.error("Failed to send message:", error);
-    toast.error("Failed to send message");
-  }
-};
-
+  };
   return (
     <div className="p-4 w-full">
       {imagePreview && (
@@ -113,7 +120,7 @@ const handleSendMessage = async (e) => {
         <button
           type="submit"
           className="btn btn-sm btn-circle"
-          disabled={!text.trim() && !imagePreview}
+          disabled={isSending || (!text.trim() && !imagePreview)} // ✅ lock during sending
         >
           <Send size={22} />
         </button>

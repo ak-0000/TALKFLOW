@@ -10,14 +10,14 @@ import { upload } from "../controllers/upload.controller.js";
 
 const router = express.Router();
 
-// 👇 change send/:id to message/send/:id
-router.post("/message/send/:id", protectRoute, upload.single("image"), sendMessage);
-
-// already fixed
-router.get("/chat/:id", protectRoute, getMessages);
+// 🟢 Get sidebar users (must be first, else ":chatId" will catch it)
 router.get("/users", protectRoute, getUsersForSidebar);
 
+// 🟢 Get all messages of a particular chat
+router.get("/:chatId", protectRoute, getMessages);
 
+// 🟢 Send message with optional image
+router.post("/send", protectRoute, upload.single("image"), sendMessage);
 
 router.stack.forEach((layer) => {
   if (layer.route) {

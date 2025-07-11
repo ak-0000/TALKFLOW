@@ -12,23 +12,27 @@ const ChatContainer = () => {
     messages,
     getMessages,
     isMessagesLoading,
-    selectedUser,
+    selectedChat,
     subscribeToMessages,
     unSubscribeFromMessages,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
 
+  // ✅ Load messages when chat changes
   useEffect(() => {
-    getMessages(selectedUser._id);
+    
+    if (!selectedChat?._id) return;
 
+    getMessages(selectedChat._id);
     subscribeToMessages();
 
     return () => unSubscribeFromMessages();
-  }, [selectedUser._id, getMessages]);
+  }, [selectedChat?._id]);
 
+  // ✅ Scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messageEndRef.current && messages) {
+    if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
@@ -48,45 +52,57 @@ const ChatContainer = () => {
       <ChatHeader />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message._id}
-            className={`chat ${message.senderId === authUser._id ? "chat-end" : "chat-start"}`}
-            ref={messageEndRef}
-          >
-            <div className=" chat-image avatar">
-              <div className="size-10 rounded-full border">
-                <img
-                  src={
-                    message.senderId === authUser._id
-                      ? authUser.profilepic || "/avatar.png"
-                      : selectedUser.profilepic || "/avatar.png"
-                  }
-                  alt="profile pic"
-                />
+        {messages.map((message) => {
+          const isMine = message.senderId._id === authUser._id;
+
+          return (
+            <div
+              key={message._id}
+              className={`chat ${isMine ? "chat-end" : "chat-start"}`}
+              ref={messageEndRef}
+            >
+              <div className="chat-image avatar">
+                <div className="size-10 rounded-full border">
+                  <img
+                    src={
+                      isMine
+                        ? authUser.profilepic || "/avatar.png"
+                        : message.senderId?.profilepic || "/avatar.png"
+                    }
+                    alt="Sender"
+                  />
+                </div>
+              </div>
+
+              <div className="chat-header mb-1">
+                {!isMine && (
+                  <span className="text-xs mr-1 font-medium text-zinc-600">
+                    {message.senderId?.fullName}
+                  </span>
+                )}
+                <time className="text-xs opacity-50">
+                  {formatMessageTime(message.createdAt)}
+                </time>
+              </div>
+
+              <div className="chat-bubble flex flex-col">
+                {message.image && (
+                  <img
+                    src={message.image}
+                    alt="Attachment"
+                    className="sm:max-w-[200px] rounded-md mb-2"
+                  />
+                )}
+                {message.text && <p>{message.text}</p>}
               </div>
             </div>
-            <div className="chat-header mb-1">
-              <time className="text-xs opacity-50 ml-1">
-                {formatMessageTime(message.createdAt)}
-              </time>
-            </div>
-            <div className="chat-bubble flex flex-col">
-              {message.image && (
-                <img
-                  src={message.image}
-                  alt="Attachment"
-                  className="sm:max-w-[200px] rounded-md mb-2"
-                />
-              )}
-              {message.text && <p>{message.text}</p>}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <MessageInput />
     </div>
   );
 };
+
 export default ChatContainer;

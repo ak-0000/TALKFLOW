@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import { generateToken } from "../lib/utils.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
+import { io } from "../lib/socket.js";
 
 export const signup = async (req, res) => {
   // Logic for user signup
@@ -47,6 +48,8 @@ export const signup = async (req, res) => {
         profilepic: newUser.profilepic,
       });
       console.log("User signed up successfully");
+      io.emit("new_user"); // ✅ notify all clients that a new user has joined
+
     } else {
       return res.status(400).send("Invalid user data");
     }

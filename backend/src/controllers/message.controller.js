@@ -5,11 +5,12 @@ import cloudinary from "../lib/cloudinary.js";
 import streamifier from "streamifier";
 import { getRecieverSocketId, io } from "../lib/socket.js";
 
-
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    const filteredUsers = await User.find({
+      _id: { $ne: loggedInUserId },
+    }).select("-password");
     res.status(200).json(filteredUsers);
   } catch (error) {
     console.error("Error fetching users for sidebar:", error);
@@ -17,17 +18,14 @@ export const getUsersForSidebar = async (req, res) => {
   }
 };
 
+// GET /api/messages/:chatId
 export const getMessages = async (req, res) => {
   try {
-    const { id: userToChatId } = req.params;
-    const myId = req.user._id;
+    const { chatId } = req.params;
 
-    const messages = await Message.find({
-      $or: [
-        { senderId: myId, receiverId: userToChatId },
-        { senderId: userToChatId, receiverId: myId }
-      ]
-    }).sort({ createdAt: 1 });
+    const messages = await Message.find({ chatId })
+      .populate("senderId", "fullName email profilepic") // Optional: show sender info
+      .sort({ createdAt: 1 });
 
     res.status(200).json(messages);
   } catch (error) {
@@ -38,15 +36,15 @@ export const getMessages = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text } = req.body;
-    const { id: receiverId } = req.params;
-    const senderId = req.user._id;
-    console.log("Incoming File:", req.file);
+    console.log("req.body:", req.body);      // ✅ log incoming text & chatId
+    console.log("req.file:", req.file);      // ✅ log image if present
 
+    const { text, chatId } = req.body;
+    const senderId = req.user._id;
 
     let imageUrl = "";
 
-    // ✅ If image file is present
+    // ✅ Upload image if exists
     if (req.file) {
       const streamUpload = () =>
         new Promise((resolve, reject) => {
@@ -64,23 +62,50 @@ export const sendMessage = async (req, res) => {
       imageUrl = result.secure_url;
     }
 
+    // ✅ Save message
     const newMessage = new Message({
       senderId,
-      receiverId,
+      chatId,
       text,
       image: imageUrl,
     });
 
     await newMessage.save();
 
-    const receicerSocketId = getRecieverSocketId(receiverId)
-    if(receicerSocketId) {
-      io.to(receicerSocketId).emit("newMessage", newMessage)
+    // ✅ Populate sender and chat's users
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate("senderId", "fullName profilepic")
+      .populate({
+        path: "chatId",
+        populate: {
+          path: "users",
+          select: "fullName profilepic _id",
+        },
+      });
+
+    // ✅ Log populated message for debugging
+    console.log("📨 Populated Message:", JSON.stringify(populatedMessage, null, 2));
+
+    // ✅ Validate chat and broadcast message via socket
+    const chat = populatedMessage.chatId;
+
+    if (chat && Array.isArray(chat.users)) {
+      chat.users.forEach((user) => {
+        if (user._id.toString() !== senderId.toString()) {
+          const receiverSocketId = getRecieverSocketId(user._id);
+          if (receiverSocketId) {
+            io.to(receiverSocketId).emit("newMessage", populatedMessage);
+          }
+        }
+      });
+    } else {
+      console.warn("⚠️ chat.users is missing or not an array", chat);
     }
- 
-    res.status(201).json(newMessage);
+
+    // ✅ Respond to sender
+    res.status(201).json(populatedMessage);
   } catch (error) {
-    console.error("Error sending message:", error);
+    console.error("❌ Error sending message:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

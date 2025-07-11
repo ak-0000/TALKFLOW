@@ -1,8 +1,27 @@
 import {Server} from "socket.io"
 import http from "http"
 import express from "express"
+import cors from "cors"
 
 const app = express() ;
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../../client/dist/index.html"));
+});
+
+app.use((req, res, next) => {
+  console.log("🔍 Incoming origin:", req.headers.origin);
+  next();
+});
+
+
+
 const server = http.createServer(app)
 
 const io = new Server(server , {
