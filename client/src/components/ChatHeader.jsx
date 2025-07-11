@@ -1,22 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import GroupSettingsModal from "./GroupSettingsModal";
 
 const ChatHeader = () => {
-  const { selectedChat, fetchGroupChats } = useChatStore();
+  const { selectedChat, fetchGroupChats, setSelectedChat } = useChatStore();
   const { authUser, onlineUsers } = useAuthStore();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  useEffect(() => {
+    if (!selectedChat || selectedChat.isGroupChat) return;
+
+    // ✅ Manually compute chatPartner for 1-on-1 chats
+    const partner = selectedChat.users?.find(
+      (u) => u._id !== authUser._id
+    );
+
+    if (partner && !selectedChat.chatPartner) {
+      setSelectedChat({
+        ...selectedChat,
+        chatPartner: partner,
+      });
+    }
+  }, [selectedChat, authUser._id, setSelectedChat]);
+
+  useEffect(() => {
+    if (selectedChat?._id) {
+      useChatStore.getState().clearNotificationsForChat(selectedChat._id);
+    }
+  }, [selectedChat?._id]);
 
   if (!selectedChat) return null;
 
   const isGroup = selectedChat?.isGroupChat;
+  const isAdmin = isGroup && selectedChat.groupAdmin?._id === authUser._id;
   const isOnline = onlineUsers.includes(
     selectedChat?.chatPartner?._id || selectedChat?._id
   );
-
-  const isAdmin = isGroup && selectedChat.groupAdmin?._id === authUser._id;
 
   return (
     <>
@@ -40,7 +61,7 @@ const ChatHeader = () => {
             <div className="font-medium flex items-center gap-2">
               {isGroup
                 ? selectedChat.chatName || "Group Chat"
-                : selectedChat.chatPartner?.fullName}
+                : selectedChat.chatPartner?.fullName || "Chat"}
               {isAdmin && (
                 <span className="badge badge-sm badge-primary">Admin</span>
               )}
@@ -75,17 +96,12 @@ const ChatHeader = () => {
           onClose={() => setShowSettingsModal(false)}
           group={selectedChat}
           onGroupUpdated={async () => {
-            await fetchGroupChats(); // ✅ refresh group list
-
-            // ✅ Now refresh selectedChat from updated group
+            await fetchGroupChats();
             const updated = useChatStore
               .getState()
               .groupChats.find((g) => g._id === selectedChat._id);
-
             if (updated) {
-              useChatStore
-                .getState()
-                .setSelectedChat({ ...updated, isGroup: true });
+              setSelectedChat({ ...updated, isGroup: true });
             }
           }}
         />

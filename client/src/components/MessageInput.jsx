@@ -3,13 +3,12 @@ import { useChatStore } from "../store/useChatStore";
 import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 
-const MessageInput = () => {
+const MessageInput = ({ value, onChange }) => {
   const { sendMessage, selectedChat } = useChatStore();
-  const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null); // ✅ store actual file
   const fileInputRef = useRef(null);
-  const [isSending, setIsSending] = useState(false); // ✅ NEW
+  const [isSending, setIsSending] = useState(false); // ✅ lock sending
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -18,11 +17,11 @@ const MessageInput = () => {
       return;
     }
 
-    setImageFile(file); // ✅ Save file for FormData
+    setImageFile(file);
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setImagePreview(reader.result); // just for preview
+      setImagePreview(reader.result);
     };
     reader.readAsDataURL(file);
   };
@@ -35,32 +34,29 @@ const MessageInput = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!text.trim() && !imageFile) return;
+    if (!value.trim() && !imageFile) return;
     if (isSending) return;
+
     setIsSending(true);
     try {
       const formData = new FormData();
-      const messageText = text.trim() || (imageFile ? imageFile.name : "");
+      const messageText = value.trim() || (imageFile ? imageFile.name : "");
 
       formData.append("text", messageText);
-      formData.append("chatId", selectedChat._id); // ✅ MUST INCLUDE THIS
+      formData.append("chatId", selectedChat._id);
 
       if (imageFile) {
         formData.append("image", imageFile);
       }
 
-      // ✅ Debug log
-      for (let pair of formData.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
-
       await sendMessage(formData);
+      onChange({ target: { value: "" } }) // ✅ valid shape
 
-      // Clear inputs
-      setText("");
-      setImagePreview(null);
-      setImageFile(null);
+
+      // Clear input and image
       if (fileInputRef.current) fileInputRef.current.value = "";
+      setImageFile(null);
+      setImagePreview(null);
     } catch (error) {
       console.error("Failed to send message:", error);
       toast.error("Failed to send message");
@@ -68,6 +64,7 @@ const MessageInput = () => {
       setIsSending(false);
     }
   };
+
   return (
     <div className="p-4 w-full">
       {imagePreview && (
@@ -80,8 +77,7 @@ const MessageInput = () => {
             />
             <button
               onClick={removeImage}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300
-              flex items-center justify-center"
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300 flex items-center justify-center"
               type="button"
             >
               <X className="size-3" />
@@ -96,8 +92,9 @@ const MessageInput = () => {
             type="text"
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
             placeholder="Type a message..."
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+            value={value}
+            onChange={onChange} // 👈 Controlled input (typing emit happens here)
+            
           />
           <input
             type="file"
@@ -106,7 +103,6 @@ const MessageInput = () => {
             ref={fileInputRef}
             onChange={handleImageChange}
           />
-
           <button
             type="button"
             className={`hidden sm:flex btn btn-circle ${
@@ -120,7 +116,7 @@ const MessageInput = () => {
         <button
           type="submit"
           className="btn btn-sm btn-circle"
-          disabled={isSending || (!text.trim() && !imagePreview)} // ✅ lock during sending
+          disabled={isSending || (!value.trim() && !imagePreview)}
         >
           <Send size={22} />
         </button>

@@ -7,9 +7,9 @@ import { io } from "socket.io-client";
 const BASE_URL =
   import.meta.env.MODE === "development"
     ? "http://localhost:5001"
-    : (window.location.origin.startsWith("https")
-        ? window.location.origin.replace(/^https/, "wss")
-        : window.location.origin.replace(/^http/, "ws"));
+    : window.location.origin.startsWith("https")
+    ? window.location.origin.replace(/^https/, "wss")
+    : window.location.origin.replace(/^http/, "ws");
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -105,6 +105,13 @@ export const useAuthStore = create((set, get) => ({
 
     // Set socket instance in store
     set({ socket });
+    // ✅ Expose for browser debugging
+    if (typeof window !== "undefined") {
+      window.socket = socket;
+    }
+    console.log("Socket connected:", socket.id);
+    
+
 
     // Listen for online users
     socket.on("getOnlineUsers", (usersIds) => {

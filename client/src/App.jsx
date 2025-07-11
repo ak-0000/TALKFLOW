@@ -10,16 +10,17 @@ import { useEffect } from "react";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { useThemeStore } from "./store/useThemeStore";
+import ChatPage from "./pages/ChatPage";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth , onlineUsers} = useAuthStore();
+  const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
   const { theme } = useThemeStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
   console.log("Auth User:", authUser);
-  console.log({onlineUsers})
+  console.log({ onlineUsers });
 
   if (isCheckingAuth && !authUser) {
     return (
@@ -49,6 +50,10 @@ const App = () => {
         <Route
           path="/profile"
           element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/chat/:chatId"
+          element={authUser ? <ChatPage /> : <Navigate to="/login" />}
         />
       </Routes>
       <Toaster />

@@ -1,10 +1,11 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import Chat from "../models/chat.model.js";
 import cloudinary from "../lib/cloudinary.js";
-
 import streamifier from "streamifier";
 import { getRecieverSocketId, io } from "../lib/socket.js";
 
+// ✅ Sidebar: Get users except logged-in
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
@@ -18,13 +19,21 @@ export const getUsersForSidebar = async (req, res) => {
   }
 };
 
-// GET /api/messages/:chatId
+// ✅ Get all messages of a chat
 export const getMessages = async (req, res) => {
   try {
     const { chatId } = req.params;
+    const chat = await Chat.findById(chatId);
+
+    // ❌ Check if chat exists and user is in chat
+    if (!chat || !chat.users.includes(req.user._id)) {
+      return res
+        .status(403)
+        .json({ message: "Access denied: Not a group member" });
+    }
 
     const messages = await Message.find({ chatId })
-      .populate("senderId", "fullName email profilepic") // Optional: show sender info
+      .populate("senderId", "fullName email profilepic")
       .sort({ createdAt: 1 });
 
     res.status(200).json(messages);
@@ -34,17 +43,22 @@ export const getMessages = async (req, res) => {
   }
 };
 
+// ✅ Send a message
 export const sendMessage = async (req, res) => {
   try {
-    console.log("req.body:", req.body);      // ✅ log incoming text & chatId
-    console.log("req.file:", req.file);      // ✅ log image if present
-
     const { text, chatId } = req.body;
     const senderId = req.user._id;
-
     let imageUrl = "";
 
-    // ✅ Upload image if exists
+    // 🛡 Access Check
+    const chat = await Chat.findById(chatId);
+    if (!chat || !chat.users.includes(senderId)) {
+      return res
+        .status(403)
+        .json({ message: "Access denied: Not a group member" });
+    }
+
+    // 📤 Upload image (if any)
     if (req.file) {
       const streamUpload = () =>
         new Promise((resolve, reject) => {
@@ -62,17 +76,16 @@ export const sendMessage = async (req, res) => {
       imageUrl = result.secure_url;
     }
 
-    // ✅ Save message
+    // 💾 Save message
     const newMessage = new Message({
       senderId,
       chatId,
       text,
       image: imageUrl,
     });
-
     await newMessage.save();
 
-    // ✅ Populate sender and chat's users
+    // 🧠 Populate data
     const populatedMessage = await Message.findById(newMessage._id)
       .populate("senderId", "fullName profilepic")
       .populate({
@@ -83,26 +96,23 @@ export const sendMessage = async (req, res) => {
         },
       });
 
-    // ✅ Log populated message for debugging
-    console.log("📨 Populated Message:", JSON.stringify(populatedMessage, null, 2));
+    // 📢 Emit to all users except sender
+    populatedMessage.chatId.users.forEach((user) => {
+      if (user._id.toString() !== senderId.toString()) {
+        const receiverSocketId = getRecieverSocketId(user._id.toString());
 
-    // ✅ Validate chat and broadcast message via socket
-    const chat = populatedMessage.chatId;
-
-    if (chat && Array.isArray(chat.users)) {
-      chat.users.forEach((user) => {
-        if (user._id.toString() !== senderId.toString()) {
-          const receiverSocketId = getRecieverSocketId(user._id);
-          if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", populatedMessage);
-          }
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("newMessage", populatedMessage);
+          io.to(receiverSocketId).emit("notification", {
+            message: chat.isGroupChat
+              ? `New message in "${chat.chatName}"`
+              : `New message from ${populatedMessage.senderId.fullName}`,
+            chatId: chat._id,
+          });
         }
-      });
-    } else {
-      console.warn("⚠️ chat.users is missing or not an array", chat);
-    }
+      }
+    });
 
-    // ✅ Respond to sender
     res.status(201).json(populatedMessage);
   } catch (error) {
     console.error("❌ Error sending message:", error);

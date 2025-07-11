@@ -9,7 +9,8 @@ import {
   renameGroup,
   updateGroupLogo,
   deleteGroup,
-  leaveGroup
+  leaveGroup,
+  getChatById
 } from "../controllers/chat.controller.js";
 import multer from "multer";
 
@@ -18,7 +19,7 @@ const upload = multer(); // for handling multipart/form-data
 
 router.post("/", protectRoute, accessChat);
 router.get("/", protectRoute, fetchChats);
-
+router.get("/:chatId", protectRoute, getChatById);
 router.post("/group", protectRoute, createGroupChat);
 router.put("/rename", protectRoute, renameGroup);
 router.put("/groupadd", protectRoute, addToGroup);

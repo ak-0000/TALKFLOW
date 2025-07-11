@@ -1,11 +1,12 @@
 import { useChatStore } from "../store/useChatStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
+import { useNavigate } from "react-router-dom";
 
 const ChatContainer = () => {
   const {
@@ -16,12 +17,109 @@ const ChatContainer = () => {
     subscribeToMessages,
     unSubscribeFromMessages,
   } = useChatStore();
-  const { authUser } = useAuthStore();
-  const messageEndRef = useRef(null);
 
-  // ✅ Load messages when chat changes
+  const { socket, authUser } = useAuthStore();
+
+  const [newMessage, setNewMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState([]);
+
+  const messageEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const navigate = useNavigate();
+
+  // ✅ Join selected chat room
   useEffect(() => {
-    
+    if (socket && selectedChat?._id) {
+      socket.emit("join chat", selectedChat._id);
+    }
+
+    if (!selectedChat) {
+      navigate("/"); // redirect to home or chat list
+    }
+  }, [socket, selectedChat]);
+
+  // ✅ 🛡️ Check if user is still part of group
+  useEffect(() => {
+    if (!selectedChat) return;
+
+    // If group and user is no longer a member
+    if (selectedChat.isGroupChat && selectedChat.users) {
+      const isStillMember = selectedChat.users.some(
+        (u) => u._id === authUser._id
+      );
+
+      if (!isStillMember) {
+        alert("❌ You were removed from the group.");
+
+        // Clear the chat from Zustand
+        useChatStore.setState({ selectedChat: null, messages: [] });
+
+        navigate("/"); // go back to sidebar
+      }
+    }
+  }, [selectedChat, authUser._id]);
+
+  // ✅ Handle user typing
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setNewMessage(value);
+
+    if (!socket || !selectedChat?._id) return;
+
+    if (!isTyping) {
+      setIsTyping(true);
+      socket.emit("typing", {
+        chatId: selectedChat._id,
+        user: {
+          _id: authUser._id,
+          fullName: authUser.fullName,
+          profilepic: authUser.profilepic,
+        },
+      });
+    }
+
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stop typing", {
+        chatId: selectedChat._id,
+        userId: authUser._id,
+      });
+      setIsTyping(false);
+    }, 2000);
+  };
+
+  // ✅ Listen for other users typing
+  useEffect(() => {
+    if (!socket || !selectedChat?._id) return;
+
+    const handleTyping = ({ chatId, user }) => {
+      if (
+        chatId === selectedChat._id &&
+        user._id !== authUser._id &&
+        !typingUsers.some((u) => u._id === user._id)
+      ) {
+        setTypingUsers((prev) => [...prev, user]);
+      }
+    };
+
+    const handleStopTyping = ({ chatId, userId }) => {
+      if (chatId === selectedChat._id) {
+        setTypingUsers((prev) => prev.filter((u) => u._id !== userId));
+      }
+    };
+
+    socket.on("typing", handleTyping);
+    socket.on("stop typing", handleStopTyping);
+
+    return () => {
+      socket.off("typing", handleTyping);
+      socket.off("stop typing", handleStopTyping);
+    };
+  }, [socket, selectedChat, authUser._id, typingUsers]);
+
+  // ✅ Load messages when chat is selected
+  useEffect(() => {
     if (!selectedChat?._id) return;
 
     getMessages(selectedChat._id);
@@ -42,7 +140,7 @@ const ChatContainer = () => {
       <div className="flex-1 flex flex-col overflow-auto">
         <ChatHeader />
         <MessageSkeleton />
-        <MessageInput />
+        <MessageInput value={newMessage} onChange={handleInputChange} />
       </div>
     );
   }
@@ -59,7 +157,6 @@ const ChatContainer = () => {
             <div
               key={message._id}
               className={`chat ${isMine ? "chat-end" : "chat-start"}`}
-              ref={messageEndRef}
             >
               <div className="chat-image avatar">
                 <div className="size-10 rounded-full border">
@@ -98,9 +195,20 @@ const ChatContainer = () => {
             </div>
           );
         })}
+
+        {/* ✅ Typing Indicator */}
+        {typingUsers.length > 0 && (
+          <div className="italic text-sm text-gray-500 px-2">
+            {typingUsers.map((u) => u.fullName).join(", ")}{" "}
+            {typingUsers.length === 1 ? "is" : "are"} typing...
+          </div>
+        )}
+
+        {/* 🔚 scroll anchor */}
+        <div ref={messageEndRef} />
       </div>
 
-      <MessageInput />
+      <MessageInput value={newMessage} onChange={handleInputChange} />
     </div>
   );
 };

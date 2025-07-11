@@ -10,6 +10,7 @@ export const useChatStore = create((set, get) => ({
   selectedChat: null,
   isUsersLoading: false,
   isMessagesLoading: false,
+  notifications: [],
 
   fetchGroupChats: async () => {
     try {
@@ -94,18 +95,29 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
-      const selectedChat = get().selectedChat;
+      const { selectedChat, notifications } = get();
 
-      // ✅ Fix: Safely compare chatId values
       const incomingChatId =
         typeof newMessage.chatId === "string"
           ? newMessage.chatId
           : newMessage.chatId._id;
 
       if (selectedChat && selectedChat._id === incomingChatId) {
+        // 👁️ You're currently in this chat → directly add to messages
         set((state) => ({
           messages: [...state.messages, newMessage],
         }));
+      } else {
+        // 💬 Different chat → store in notifications if not already there
+        const alreadyExists = notifications.some(
+          (msg) => msg._id === newMessage._id
+        );
+
+        if (!alreadyExists) {
+          set((state) => ({
+            notifications: [...state.notifications, newMessage],
+          }));
+        }
       }
     });
   },
@@ -113,6 +125,14 @@ export const useChatStore = create((set, get) => ({
   unSubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
+  },
+  loadChatById: async (chatId) => {
+    try {
+      const res = await axiosInstance.get(`/chat/${chatId}`);
+      set({ selectedChat: res.data });
+    } catch (err) {
+      console.error("Failed to load chat by ID", err);
+    }
   },
 
   // 🟢 Create group
@@ -233,4 +253,17 @@ export const useChatStore = create((set, get) => ({
       toast.error("Failed to delete group");
     }
   },
+  setNotifications: (updateFn) =>
+    set((state) => ({
+      notifications: updateFn(state.notifications),
+    })),
+
+  clearNotificationsForChat: (chatId) =>
+    set((state) => ({
+      notifications: state.notifications.filter((msg) => {
+        const incomingChatId =
+          typeof msg.chatId === "string" ? msg.chatId : msg.chatId._id;
+        return incomingChatId !== chatId;
+      }),
+    })),
 }));

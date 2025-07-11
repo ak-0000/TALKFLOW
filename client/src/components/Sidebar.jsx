@@ -36,6 +36,12 @@ const Sidebar = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (selectedChat?._id) {
+      useChatStore.getState().clearNotificationsForChat(selectedChat._id);
+    }
+  }, [selectedChat?._id]);
+
   const filteredUsers = users.filter((user) => {
     const matchesOnline = showOnlineOnly
       ? onlineUsers.includes(user._id)

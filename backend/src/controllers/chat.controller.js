@@ -1,6 +1,6 @@
 import Chat from "../models/chat.model.js";
 import User from "../models/user.model.js";
-import { io } from "../lib/socket.js";
+import { io, getRecieverSocketId } from "../lib/socket.js";
 import cloudinary from "../lib/cloudinary.js";
 import streamifier from "streamifier";
 
@@ -33,7 +33,10 @@ const accessChat = async (req, res) => {
       users: [req.user._id, userId],
     });
 
-    const fullChat = await Chat.findById(newChat._id).populate("users", "-password");
+    const fullChat = await Chat.findById(newChat._id).populate(
+      "users",
+      "-password"
+    );
     res.status(200).json(fullChat);
   } catch (err) {
     console.error("Access Chat Error:", err);
@@ -64,10 +67,24 @@ const fetchChats = async (req, res) => {
   }
 };
 
-// Create a group
+// Get chat by ID
+const getChatById = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const chat = await Chat.findById(chatId).populate("users", "-password");
+    if (!chat) return res.status(404).json({ message: "Chat not found" });
+    res.status(200).json(chat);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Create group chat
 const createGroupChat = async (req, res) => {
   const { users, name } = req.body;
-  if (!users || !name) return res.status(400).json({ message: "Fields required" });
+  if (!users || !name)
+    return res.status(400).json({ message: "Fields required" });
 
   try {
     const parsedUsers = JSON.parse(users);
@@ -103,10 +120,13 @@ const renameGroup = async (req, res) => {
       chatId,
       { chatName },
       { new: true }
-    ).populate("users", "-password")
-     .populate("groupAdmin", "-password");
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
 
-    if (!updatedChat) return res.status(404).json({ message: "Group not found" });
+    if (!updatedChat)
+      return res.status(404).json({ message: "Group not found" });
+
     io.emit("group_renamed", updatedChat);
     res.json(updatedChat);
   } catch (err) {
@@ -115,19 +135,40 @@ const renameGroup = async (req, res) => {
   }
 };
 
-// Add member to group
+// Add user to group
 const addToGroup = async (req, res) => {
   const { chatId, userId } = req.body;
+
   try {
     const chat = await Chat.findByIdAndUpdate(
       chatId,
       { $addToSet: { users: userId } },
       { new: true }
-    ).populate("users", "-password")
-     .populate("groupAdmin", "-password");
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
 
     if (!chat) return res.status(404).json({ message: "Group not found" });
-    io.emit("group_user_added", chat);
+
+    // Notify all existing users except added one
+    chat.users.forEach((user) => {
+      const socketId = getRecieverSocketId(user._id.toString());
+      if (user._id.toString() !== userId && socketId) {
+        io.to(socketId).emit("notification", {
+          message: `${chat.chatName}: A new member was added`,
+          chatId: chat._id,
+        });
+      }
+    });
+
+    // Notify added user
+    const addedSocket = getRecieverSocketId(userId);
+    if (addedSocket) {
+      io.to(addedSocket).emit("notification", {
+        message: `You were added to group: ${chat.chatName}`,
+        chatId: chat._id,
+      });
+    }
 
     res.json(chat);
   } catch (err) {
@@ -136,19 +177,38 @@ const addToGroup = async (req, res) => {
   }
 };
 
-// Remove member from group
+// Remove user from group
 const removeFromGroup = async (req, res) => {
   const { chatId, userId } = req.body;
+
   try {
     const chat = await Chat.findByIdAndUpdate(
       chatId,
       { $pull: { users: userId } },
       { new: true }
-    ).populate("users", "-password")
-     .populate("groupAdmin", "-password");
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
 
     if (!chat) return res.status(404).json({ message: "Group not found" });
-    io.emit("group_user_removed", chat);
+
+    const removedSocket = getRecieverSocketId(userId);
+    if (removedSocket) {
+      io.to(removedSocket).emit("notification", {
+        message: `You were removed from group: ${chat.chatName}`,
+        chatId: chat._id,
+      });
+    }
+
+    chat.users.forEach((user) => {
+      const socketId = getRecieverSocketId(user._id.toString());
+      if (socketId) {
+        io.to(socketId).emit("notification", {
+          message: `${chat.chatName}: A member was removed`,
+          chatId: chat._id,
+        });
+      }
+    });
 
     res.json(chat);
   } catch (err) {
@@ -170,10 +230,12 @@ const leaveGroup = async (req, res) => {
     if (group.groupAdmin.toString() === userId.toString()) {
       if (group.users.length === 1) {
         await Chat.findByIdAndDelete(chatId);
-        io.emit("group_deleted",  chatId);
+        io.emit("group_deleted", chatId);
         return res.status(200).json({ message: "Group deleted (admin left)" });
       } else {
-        const newAdmin = group.users.find((u) => u.toString() !== userId.toString());
+        const newAdmin = group.users.find(
+          (u) => u.toString() !== userId.toString()
+        );
         group.groupAdmin = newAdmin;
       }
     }
@@ -185,7 +247,15 @@ const leaveGroup = async (req, res) => {
       .populate("users", "-password")
       .populate("groupAdmin", "-password");
 
-    io.emit("group_deleted", chatId);
+    updatedGroup.users.forEach((user) => {
+      const socketId = getRecieverSocketId(user._id.toString());
+      if (socketId) {
+        io.to(socketId).emit("notification", {
+          message: `${group.chatName}: A member left the group`,
+          chatId,
+        });
+      }
+    });
 
     res.json(updatedGroup);
   } catch (err) {
@@ -194,7 +264,7 @@ const leaveGroup = async (req, res) => {
   }
 };
 
-// Upload or change group logo
+// Update group logo
 const updateGroupLogo = async (req, res) => {
   try {
     const { chatId } = req.body;
@@ -207,8 +277,7 @@ const updateGroupLogo = async (req, res) => {
     if (chat.groupAdmin.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Only admin can update logo" });
 
-    if (!file)
-      return res.status(400).json({ message: "No image provided" });
+    if (!file) return res.status(400).json({ message: "No image provided" });
 
     const uploadStream = () =>
       new Promise((resolve, reject) => {
@@ -246,7 +315,7 @@ const deleteGroup = async (req, res) => {
       return res.status(403).json({ message: "Only admin can delete" });
 
     await Chat.deleteOne({ _id: id });
-    io.emit("group_deleted", id );
+    io.emit("group_deleted", id);
 
     res.status(200).json({ message: "Group deleted" });
   } catch (err) {
@@ -265,4 +334,5 @@ export {
   leaveGroup,
   updateGroupLogo,
   deleteGroup,
+  getChatById,
 };
