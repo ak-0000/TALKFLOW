@@ -3,7 +3,7 @@ import Message from "../models/message.model.js";
 import Chat from "../models/chat.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import streamifier from "streamifier";
-import { getRecieverSocketId, io } from "../lib/socket.js";
+import { getRecieverSocketId, io, isUserViewingChat } from "../lib/socket.js";
 
 // ✅ Sidebar: Get users except logged-in
 export const getUsersForSidebar = async (req, res) => {
@@ -42,6 +42,13 @@ export const getMessages = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// ✅ Send a message (HTTP controller)
+import User from "../models/user.model.js";
+import Message from "../models/message.model.js";
+import Chat from "../models/chat.model.js";
+import cloudinary from "../lib/cloudinary.js";
+import streamifier from "streamifier";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -91,25 +98,23 @@ export const sendMessage = async (req, res) => {
         },
       });
 
-    // ✅ Emit to each user except sender
-    populatedMessage.chatId.users.forEach((user) => {
-      if (user._id.toString() !== senderId.toString()) {
-        const socketId = getRecieverSocketId(user._id.toString());
-        const activeChat = getUserChatMap(user._id.toString());
+    // 🔄 Emit to chat room
+    io.to(chatId).emit("newMessage", populatedMessage);
 
-        if (socketId) {
-          // 🔄 Live message
-          io.to(socketId).emit("newMessage", populatedMessage);
-
-          // 🔔 Notify only if user is not already viewing the chat
-          if (activeChat !== chatId.toString()) {
-            io.to(socketId).emit("notification", {
-              message: chat.isGroupChat
-                ? `New message in "${chat.chatName}"`
-                : `New message from ${populatedMessage.senderId.fullName}`,
-              chatId,
-            });
-          }
+    // 🔔 Notify users not viewing this chat
+    chat.users.forEach((user) => {
+      const userIdStr = user._id.toString();
+      const senderIdStr = senderId.toString();
+      if (userIdStr !== senderIdStr) {
+        const socketId = getRecieverSocketId(userIdStr);
+        const isViewing = isUserViewingChat(userIdStr, chatId);
+        if (socketId && !isViewing) {
+          io.to(socketId).emit("notification", {
+            message: chat.isGroupChat
+              ? `New message in "${chat.chatName}"`
+              : `New message from ${populatedMessage.senderId.fullName}`,
+            chatId,
+          });
         }
       }
     });
@@ -120,4 +125,3 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
