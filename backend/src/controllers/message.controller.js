@@ -50,7 +50,6 @@ export const sendMessage = async (req, res) => {
     const senderId = req.user._id;
     let imageUrl = "";
 
-    // 🛡 Access Check
     const chat = await Chat.findById(chatId);
     if (!chat || !chat.users.includes(senderId)) {
       return res
@@ -58,7 +57,6 @@ export const sendMessage = async (req, res) => {
         .json({ message: "Access denied: Not a group member" });
     }
 
-    // 📤 Upload image (if any)
     if (req.file) {
       const streamUpload = () =>
         new Promise((resolve, reject) => {
@@ -76,7 +74,6 @@ export const sendMessage = async (req, res) => {
       imageUrl = result.secure_url;
     }
 
-    // 💾 Save message
     const newMessage = new Message({
       senderId,
       chatId,
@@ -85,7 +82,6 @@ export const sendMessage = async (req, res) => {
     });
     await newMessage.save();
 
-    // 🧠 Populate data
     const populatedMessage = await Message.findById(newMessage._id)
       .populate("senderId", "fullName profilepic")
       .populate({
@@ -96,26 +92,12 @@ export const sendMessage = async (req, res) => {
         },
       });
 
-    // 📢 Emit to all users except sender
-    populatedMessage.chatId.users.forEach((user) => {
-      if (user._id.toString() !== senderId.toString()) {
-        const receiverSocketId = getRecieverSocketId(user._id.toString());
-
-        if (receiverSocketId) {
-          io.to(receiverSocketId).emit("newMessage", populatedMessage);
-          io.to(receiverSocketId).emit("notification", {
-            message: chat.isGroupChat
-              ? `New message in "${chat.chatName}"`
-              : `New message from ${populatedMessage.senderId.fullName}`,
-            chatId: chat._id,
-          });
-        }
-      }
-    });
-
+    // ✅ Emit only to sender's Socket.IO
+    io.emit("new message", populatedMessage); // Optional: used if backend handles socket routing
     res.status(201).json(populatedMessage);
   } catch (error) {
     console.error("❌ Error sending message:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
