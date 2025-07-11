@@ -2,9 +2,12 @@ import {Server} from "socket.io"
 import http from "http"
 import express from "express"
 import cors from "cors"
+import { fileURLToPath } from 'url';
+
 import path from "path"
 const app = express() ;
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 app.use(
   cors({
     origin: "http://localhost:5173",
