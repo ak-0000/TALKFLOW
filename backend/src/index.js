@@ -5,18 +5,15 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import chatRoutes from "./routes/chat.routes.js";
 import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
 
-// Setup __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const PORT = process.env.PORT || 5000;
+const __dirname = path.resolve();
+console.log("Server directory:", __dirname);
 
 dotenv.config();
 connectDB();
@@ -33,14 +30,15 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/user", userRoutes);
 
-// ✅ Static frontend build
-const clientDistPath = path.join(__dirname, "../../../client/dist");
-app.use(express.static(clientDistPath));
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../client/dist")));
+
+  app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, "../client", "dist", "index.html"));
+  });
+}
 
 // ✅ Catch-all route for SPA
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(clientDistPath, "index.html"));
-});
 
 // Start server
 server.listen(PORT, () => {
