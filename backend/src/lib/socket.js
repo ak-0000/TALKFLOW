@@ -13,22 +13,26 @@ const io = new Server(server, {
 });
 
 const userSocketMap = {}; // userId => socketId
-const userChatMap = new Map(); // socket.id => chatId
+const userChatMap = {}; // userId => chatId
 
 io.on("connection", (socket) => {
   console.log("✅ A user connected:", socket.id);
 
   const userId = socket.handshake.query.userId;
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  }
 
-  io.emit("getOnlineUsers", Object.keys(userSocketMap));
-
-  // ✅ Save the chat user is currently viewing
+  // ✅ Track which chat user is viewing
   socket.on("join chat", (chatId) => {
-    userChatMap.set(socket.id, chatId);
-    socket.join(chatId);
+    if (userId) {
+      userChatMap[userId] = chatId;
+      socket.join(chatId);
+    }
   });
 
+  // ✅ Typing Indicators
   socket.on("typing", ({ chatId, user }) => {
     socket.in(chatId).emit("typing", { chatId, user });
   });
@@ -37,6 +41,7 @@ io.on("connection", (socket) => {
     socket.in(chatId).emit("stop typing", { chatId, userId });
   });
 
+  // ✅ Message + Notification Handling
   socket.on("new message", (message) => {
     const chatId =
       typeof message.chatId === "string" ? message.chatId : message.chatId._id;
@@ -44,16 +49,14 @@ io.on("connection", (socket) => {
 
     socket.to(chatId).emit("newMessage", message);
 
-    // 🎯 Send notification only if user is NOT already viewing that chat
     const chatUsers = message.chatId.users || [];
-
     chatUsers.forEach((user) => {
       if (user._id !== message.senderId._id) {
         const receiverSocketId = getRecieverSocketId(user._id);
+        const receiverChatId = userChatMap[user._id]; // ✅ now correct
 
         if (receiverSocketId) {
-          const isUserInSameChat =
-            userChatMap.get(receiverSocketId) === chatId;
+          const isUserInSameChat = receiverChatId === chatId;
 
           if (!isUserInSameChat) {
             io.to(receiverSocketId).emit("notification", {
@@ -66,10 +69,15 @@ io.on("connection", (socket) => {
     });
   });
 
+  // ✅ Cleanup on disconnect
   socket.on("disconnect", () => {
     console.log("❌ A user disconnected:", socket.id);
-    delete userSocketMap[userId];
-    userChatMap.delete(socket.id);
+
+    if (userId) {
+      delete userSocketMap[userId];
+      delete userChatMap[userId];
+    }
+
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
@@ -77,6 +85,11 @@ io.on("connection", (socket) => {
 // 🔍 Helper to get socketId from userId
 export function getRecieverSocketId(userId) {
   return userSocketMap[userId];
+}
+
+// 🧠 Optional helper to get user's active chat
+export function getUserChatMap(userId) {
+  return userChatMap[userId];
 }
 
 export { app, server, io };

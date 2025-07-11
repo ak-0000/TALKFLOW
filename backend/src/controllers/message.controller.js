@@ -43,7 +43,6 @@ export const getMessages = async (req, res) => {
   }
 };
 
-// ✅ Send a message
 export const sendMessage = async (req, res) => {
   try {
     const { text, chatId } = req.body;
@@ -92,8 +91,29 @@ export const sendMessage = async (req, res) => {
         },
       });
 
-    // ✅ Emit only to sender's Socket.IO
-    io.emit("new message", populatedMessage); // Optional: used if backend handles socket routing
+    // ✅ Emit to each user except sender
+    populatedMessage.chatId.users.forEach((user) => {
+      if (user._id.toString() !== senderId.toString()) {
+        const socketId = getRecieverSocketId(user._id.toString());
+        const activeChat = getUserChatMap(user._id.toString());
+
+        if (socketId) {
+          // 🔄 Live message
+          io.to(socketId).emit("newMessage", populatedMessage);
+
+          // 🔔 Notify only if user is not already viewing the chat
+          if (activeChat !== chatId.toString()) {
+            io.to(socketId).emit("notification", {
+              message: chat.isGroupChat
+                ? `New message in "${chat.chatName}"`
+                : `New message from ${populatedMessage.senderId.fullName}`,
+              chatId,
+            });
+          }
+        }
+      }
+    });
+
     res.status(201).json(populatedMessage);
   } catch (error) {
     console.error("❌ Error sending message:", error);
