@@ -43,13 +43,6 @@ export const getMessages = async (req, res) => {
   }
 };
 
-// ✅ Send a message (HTTP controller)
-import User from "../models/user.model.js";
-import Message from "../models/message.model.js";
-import Chat from "../models/chat.model.js";
-import cloudinary from "../lib/cloudinary.js";
-import streamifier from "streamifier";
-
 export const sendMessage = async (req, res) => {
   try {
     const { text, chatId } = req.body;
