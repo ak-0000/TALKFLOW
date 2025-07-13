@@ -2,7 +2,7 @@
 
 ![TalkFlow Banner](https://img.shields.io/badge/MERN-Stack-blue.svg) ![Live Chat](https://img.shields.io/badge/Real--Time-Enabled-brightgreen) ![Status](https://img.shields.io/badge/Status-Under%20Development-orange)
 
-**TalkFlow** is a modern full-stack real-time chat application built with the MERN stack. It supports 1-on-1 chats, group chats, chat notifications, typing indicators, and an integrated AI assistant powered by the Gemini API. Designed with a clean UI and developer-friendly architecture.
+**TalkFlow** is a modern full-stack real-time chat application built with the MERN stack. It supports 1-on-1 chats, group chats, chat notifications, typing indicators. Designed with a clean UI and developer-friendly architecture.
 
 ---
 
@@ -25,6 +25,9 @@
 
 ---
 
+***💖 Support***
+*If you find this project useful, consider giving it a ⭐ on GitHub!*
+
 ## 🔑 Key Features
 
 - 🔐 **Secure Authentication** with JWT
@@ -36,17 +39,9 @@
 - ⚡ **Real-Time Messaging** via Socket.IO
 - ✍️ **Typing Indicators**
 - 🔔 **Real-Time Notifications** (group and personal)
-- 🤖 **AI Bot Chat** using Gemini API
 - 🖼️ **Profile & Group Image Uploads** via Cloudinary
 - 🌓 **Dark & Light Mode** toggle
 - 📱 Fully **responsive UI**
-
----
-
-## 📸 Screenshots
-
-> *(You can add images later by uploading to Imgur or your GitHub repo's assets folder)*
-
 ---
 
 ## 📦 Getting Started
@@ -56,13 +51,54 @@
 - Node.js (v18+)
 - MongoDB Atlas or local instance
 - Cloudinary Account
-- Gemini API Key (from Google AI Studio)
 
 ---
 
 ### 🚀 Local Setup
 
-#### 1. Clone the Repo
+#### 2. Install Dependencies
+
+**Backend**
 ```bash
-git clone https://github.com/ak-0000/TALKFLOW.git
-cd TALKFLOW
+cd backend
+npm install
+
+```
+**Frontend**
+
+```bash
+cd ../frontend
+npm install
+```
+***🔐 3. Setup Environment Variables***
+Create .env files in both backend/ and frontend/.
+
+Example for backend/.env:
+
+**env**
+PORT=5000
+MONGO_URI=your_mongo_uri
+JWT_SECRET=your_jwt_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+***▶️ 4. Start the Application***
+Open two separate terminals and run the following:
+
+Start Backend
+
+```bash
+Copy
+Edit
+cd backend
+npm start
+```
+Start Frontend
+
+```bash
+Copy
+Edit
+cd frontend
+npm start
+```
