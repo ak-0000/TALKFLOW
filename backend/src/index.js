@@ -11,12 +11,12 @@ import chatRoutes from "./routes/chat.routes.js";
 import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
 
+dotenv.config();
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 console.log("Server directory:", __dirname);
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
-dotenv.config();
 connectDB();
 
 // Middleware
