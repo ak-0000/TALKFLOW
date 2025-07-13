@@ -76,7 +76,7 @@ Create .env files in both backend/ and frontend/.
 Example for backend/.env:
 
 **env**
-PORT=5000
+PORT=5000.
 MONGO_URI=your_mongo_uri
 JWT_SECRET=your_jwt_secret
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -89,16 +89,14 @@ Open two separate terminals and run the following:
 Start Backend
 
 ```bash
-Copy
-Edit
+
 cd backend
 npm start
 ```
 Start Frontend
 
 ```bash
-Copy
-Edit
+
 cd frontend
 npm start
 ```
