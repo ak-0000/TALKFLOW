@@ -64,8 +64,8 @@ Users can update their profile details, including name, email, and profile image
 ---
 
 ### ⚙️ User Friendly UI 
-Manage group chat settings such as renaming the group, updating the logo, and adding/removing members.  
-![Group Settings](https://github.com/user-attachments/assets/8d3c9fe3-61d0-4bf7-8404-b4f454180e68)
+simple to use user friendly ui supporting personal one to one and group chats
+![Group Settings](<img width="1540" height="886" alt="image" src="https://github.com/user-attachments/assets/ef715530-e99d-4728-b318-0483ad2875f4" />)
 
 ---
 
