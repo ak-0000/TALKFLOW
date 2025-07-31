@@ -65,13 +65,13 @@ Users can update their profile details, including name, email, and profile image
 
 ### ⚙️ User Friendly UI 
 simple to use user friendly ui supporting personal one to one and group chats
-![Group Settings](<img width="1549" height="877" alt="image" src="https://github.com/user-attachments/assets/ef715530-e99d-4728-b318-0483ad2875f4" />)
+![Group Settings](https://github.com/user-attachments/assets/ef715530-e99d-4728-b318-0483ad2875f4)
 
 ---
 
 ### 💬 Real-Time Chat Dashboard  
 Displays all personal and group chats with real-time updates. Includes tabs for navigation and a button to create new groups.  
-![Chat Dashboard](<img width="1549" height="877" alt="image" src="https://github.com/user-attachments/assets/b356cd48-71f7-437d-b68f-ae0009b7afba" />)
+![Chat Dashboard](https://github.com/user-attachments/assets/b356cd48-71f7-437d-b68f-ae0009b7afba")
 
 ---
 
