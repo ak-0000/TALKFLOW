@@ -1,4 +1,4 @@
-# 💬 TalkFlow – Real-Time Chat Application
+# 💬 TalkFlow 
 
 ![TalkFlow Banner](https://img.shields.io/badge/MERN-Stack-blue.svg) ![Live Chat](https://img.shields.io/badge/Real--Time-Enabled-brightgreen)
 
