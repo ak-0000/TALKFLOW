@@ -71,7 +71,7 @@ Manage group chat settings such as renaming the group, updating the logo, and ad
 
 ### 💬 Real-Time Chat Dashboard  
 Displays all personal and group chats with real-time updates. Includes tabs for navigation and a button to create new groups.  
-![Chat Dashboard](https://github.com/user-attachments/assets/ff182346-cc49-4a88-a0ef-292e344cae7a)
+![Chat Dashboard](<img width="1549" height="877" alt="image" src="https://github.com/user-attachments/assets/b356cd48-71f7-437d-b68f-ae0009b7afba" />)
 
 ---
 
