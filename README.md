@@ -44,48 +44,39 @@
 - 📱 Fully **responsive UI**
 ---
 
-## 📸 Screenshots
-
-Below are some key screens from the application that showcase core features and UI interactions.
-
----
-
-### 🔍 Search Feature (Real-time User Search)
-![Search Feature](https://github.com/user-attachments/assets/72f39634-78b0-4db9-971b-a04ffee0a3ae)
+### 🔐 Login Page  
+Displays the login interface where users authenticate to access the chat application.  
+![Login Page](https://github.com/user-attachments/assets/72f39634-78b0-4db9-971b-a04ffee0a3ae)
 
 ---
 
-### 💬 Chat Interface (Private & Group Chat)
-![Chat Interface](https://github.com/user-attachments/assets/dd9a73dd-9801-479c-8066-8339e264adf7)
+### 🎨 Theme Support  
+Showcases the ability to switch between light and dark themes for a personalized experience.  
+![Theme Support](https://github.com/user-attachments/assets/dd9a73dd-9801-479c-8066-8339e264adf7)
 
 ---
 
-### 👥 Group Chat Creation and Management
-![Group Chat](https://github.com/user-attachments/assets/cc69d4ea-51ee-4e2d-9156-e8a1cc581137)
+### 👤 Edit Profile  
+Users can update their profile details, including name, email, and profile image.  
+![Edit Profile](https://github.com/user-attachments/assets/cc69d4ea-51ee-4e2d-9156-e8a1cc581137)
 
 ---
 
-### ⚙️ Group Settings Modal (Admin Controls)
-- Rename Group  
-- Add/Remove Members  
-- Update Group Logo  
-- Leave/Delete Group  
+### ⚙️ Group Chat Settings  
+Manage group chat settings such as renaming the group, updating the logo, and adding/removing members.  
 ![Group Settings](https://github.com/user-attachments/assets/8d3c9fe3-61d0-4bf7-8404-b4f454180e68)
 
 ---
 
-### 🖥️ Dashboard View
-- Displays all users and group chats  
-- Tabs for easy switching  
-- Group creation button  
-![Dashboard](https://github.com/user-attachments/assets/ff182346-cc49-4a88-a0ef-292e344cae7a)
+### 💬 Real-Time Chat Dashboard  
+Displays all personal and group chats with real-time updates. Includes tabs for navigation and a button to create new groups.  
+![Chat Dashboard](https://github.com/user-attachments/assets/ff182346-cc49-4a88-a0ef-292e344cae7a)
 
 ---
 
-### ✅ Toast Notifications
-- Real-time updates  
-- Feedback for group events (added/removed, rename, etc.)  
-![Toast Notification](https://github.com/user-attachments/assets/e2bad561-5a43-4f30-8068-f90b53d1212a)
+### 🔔 Toast Notifications  
+Real-time notifications for actions like user additions, removals, group renaming, and other key events.  
+![Toast Notifications](https://github.com/user-attachments/assets/e2bad561-5a43-4f30-8068-f90b53d1212a)
 
 ---
 
