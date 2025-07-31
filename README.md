@@ -65,7 +65,7 @@ Users can update their profile details, including name, email, and profile image
 
 ### ⚙️ User Friendly UI 
 simple to use user friendly ui supporting personal one to one and group chats
-![Group Settings](<img width="1540" height="886" alt="image" src="https://github.com/user-attachments/assets/ef715530-e99d-4728-b318-0483ad2875f4" />)
+![Group Settings](<img width="1549" height="877" alt="image" src="https://github.com/user-attachments/assets/ef715530-e99d-4728-b318-0483ad2875f4" />)
 
 ---
 
