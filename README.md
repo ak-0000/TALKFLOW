@@ -43,6 +43,7 @@
 - 🌓 **Dark & Light Mode** toggle
 - 📱 Fully **responsive UI**
 ---
+### ScreenShots
 
 ### 🔐 Login Page  
 Displays the login interface where users authenticate to access the chat application.  
@@ -62,7 +63,7 @@ Users can update their profile details, including name, email, and profile image
 
 ---
 
-### ⚙️ Group Chat Settings  
+### ⚙️ User Friendly UI 
 Manage group chat settings such as renaming the group, updating the logo, and adding/removing members.  
 ![Group Settings](https://github.com/user-attachments/assets/8d3c9fe3-61d0-4bf7-8404-b4f454180e68)
 
