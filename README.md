@@ -71,7 +71,7 @@ simple to use user friendly ui supporting personal one to one and group chats
 
 ### 💬 Real-Time Chat Dashboard  
 Displays all personal and group chats with real-time updates. Includes tabs for navigation and a button to create new groups.  
-![Chat Dashboard](https://github.com/user-attachments/assets/b356cd48-71f7-437d-b68f-ae0009b7afba)
+![Chat Dashboard](https://github.com/user-attachments/assets/5ce928e3-5582-4b15-bce8-b5b73953ffb0)
 
 ---
 
