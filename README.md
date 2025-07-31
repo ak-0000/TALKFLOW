@@ -1,6 +1,6 @@
 # 💬 TalkFlow – Real-Time Chat Application
 
-![TalkFlow Banner](https://img.shields.io/badge/MERN-Stack-blue.svg) ![Live Chat](https://img.shields.io/badge/Real--Time-Enabled-brightgreen) ![Status](https://img.shields.io/badge/Status-Under%20Development-orange)
+![TalkFlow Banner](https://img.shields.io/badge/MERN-Stack-blue.svg) ![Live Chat](https://img.shields.io/badge/Real--Time-Enabled-brightgreen)
 
 **TalkFlow** is a modern full-stack real-time chat application built with the MERN stack. It supports 1-on-1 chats, group chats, chat notifications, typing indicators. Designed with a clean UI and developer-friendly architecture.
 
@@ -44,6 +44,52 @@
 - 📱 Fully **responsive UI**
 ---
 
+## 📸 Screenshots
+
+Below are some key screens from the application that showcase core features and UI interactions.
+
+---
+
+### 🔍 Search Feature (Real-time User Search)
+![Search Feature](https://github.com/user-attachments/assets/72f39634-78b0-4db9-971b-a04ffee0a3ae)
+
+---
+
+### 💬 Chat Interface (Private & Group Chat)
+![Chat Interface](https://github.com/user-attachments/assets/dd9a73dd-9801-479c-8066-8339e264adf7)
+
+---
+
+### 👥 Group Chat Creation and Management
+![Group Chat](https://github.com/user-attachments/assets/cc69d4ea-51ee-4e2d-9156-e8a1cc581137)
+
+---
+
+### ⚙️ Group Settings Modal (Admin Controls)
+- Rename Group  
+- Add/Remove Members  
+- Update Group Logo  
+- Leave/Delete Group  
+![Group Settings](https://github.com/user-attachments/assets/8d3c9fe3-61d0-4bf7-8404-b4f454180e68)
+
+---
+
+### 🖥️ Dashboard View
+- Displays all users and group chats  
+- Tabs for easy switching  
+- Group creation button  
+![Dashboard](https://github.com/user-attachments/assets/ff182346-cc49-4a88-a0ef-292e344cae7a)
+
+---
+
+### ✅ Toast Notifications
+- Real-time updates  
+- Feedback for group events (added/removed, rename, etc.)  
+![Toast Notification](https://github.com/user-attachments/assets/e2bad561-5a43-4f30-8068-f90b53d1212a)
+
+---
+
+---
 ## 📦 Getting Started
 
 ### 🔧 Prerequisites
